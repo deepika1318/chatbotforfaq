@@ -74,11 +74,11 @@ export function matchFaq(query: string): MatchResult {
   const ranked: ScoredFaq[] = faqData
     .map((faq, index) => ({
       faq,
-      score: cosineSimilarity(queryVector, tfidfModel.documentVectors[index]),
+      score: cosineSimilarity(queryVector, tfidfModel.documentVectors[index] ?? new Map()),
     }))
     .sort((a, b) => b.score - a.score);
 
-  const best = ranked[0];
+  const best = ranked[0]!;
 
   // --- Weight breakdown for the NLP demo view ------------------------------
   const counts = new Map<string, number>();
