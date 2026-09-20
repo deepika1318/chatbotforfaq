@@ -49,7 +49,8 @@ export function FaqExplorer({ onAskInChat }: { onAskInChat: (question: string) =
   }, [search, category]);
 
   return (
-    <div className="space-y-5">
+    <section aria-labelledby="faq-library-heading" className="space-y-5">
+      <h3 id="faq-library-heading" className="sr-only">Frequently asked question library</h3>
       <div className="relative rounded-lg border border-border bg-card p-2 shadow-sm">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -61,7 +62,7 @@ export function FaqExplorer({ onAskInChat }: { onAskInChat: (question: string) =
         />
       </div>
 
-      <div className="scrollbar-none -mx-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+      <nav aria-label="Filter FAQs by category" className="scrollbar-none -mx-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
         {(["All", ...FAQ_CATEGORIES] as const).map((c) => (
           <Button
             key={c}
@@ -79,9 +80,9 @@ export function FaqExplorer({ onAskInChat }: { onAskInChat: (question: string) =
             {c}
           </Button>
         ))}
-      </div>
+      </nav>
 
-      <p className="text-xs text-muted-foreground">
+      <p role="status" aria-live="polite" aria-atomic="true" className="text-xs font-semibold text-muted-foreground">
         Showing {filtered.length} of {faqData.length} FAQs
       </p>
 
@@ -113,6 +114,6 @@ export function FaqExplorer({ onAskInChat }: { onAskInChat: (question: string) =
           <Button variant="ghost" className="mt-2 min-h-11" onClick={() => { setSearch(""); setCategory("All"); }}><RotateCcw className="size-4" /> Reset filters</Button>
         </div>
       )}
-    </div>
+    </section>
   );
 }

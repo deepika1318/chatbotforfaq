@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Braces, Filter, GitCompareArrows, Hash, ScanText, Sigma } from "lucide-react";
 import { CONFIDENCE_THRESHOLD, matchFaq, tfidfModel } from "@/lib/faqEngine";
 import { faqData } from "@/data/faqData";
+import { cn } from "@/lib/utils";
 
 const PIPELINE = [
   {
@@ -55,7 +56,8 @@ export function NlpDemo() {
   const [result, setResult] = useState(() => matchFaq("How do I reset my forgotten password?"));
 
   return (
-    <div className="space-y-5">
+    <section aria-labelledby="nlp-lab-heading" className="space-y-5">
+      <h3 id="nlp-lab-heading" className="sr-only">Natural language processing lab</h3>
       <Card className="overflow-hidden border-border bg-card shadow-md">
         <CardHeader>
           <CardTitle className="text-xl">A transparent path from question to answer</CardTitle>
@@ -182,7 +184,7 @@ export function NlpDemo() {
           </p>
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 }
 

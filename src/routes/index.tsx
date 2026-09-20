@@ -62,7 +62,7 @@ function Index() {
           <h2 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">Answers you can trust. Logic you can inspect.</h2>
         </div>
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="mb-5 grid h-auto w-full grid-cols-3 gap-1 rounded-lg border border-border bg-card p-1 shadow-sm sm:w-fit">
+          <TabsList aria-label="Application sections" className="mb-5 grid h-auto w-full grid-cols-3 gap-1 rounded-lg border border-border bg-card p-1 shadow-sm sm:w-fit">
             <TabsTrigger value="chat" className="min-h-10 gap-1.5 px-2 text-xs sm:px-4 sm:text-sm"><MessageCircleMore className="size-4 shrink-0" /> Chat</TabsTrigger>
             <TabsTrigger value="faqs" className="min-h-10 gap-1.5 px-2 text-xs sm:px-4 sm:text-sm"><Database className="size-4 shrink-0" /> <span className="hidden xs:inline">FAQ </span>Library</TabsTrigger>
             <TabsTrigger value="about" className="min-h-10 gap-1.5 px-2 text-xs sm:px-4 sm:text-sm"><Braces className="size-4 shrink-0" /> NLP Lab</TabsTrigger>
