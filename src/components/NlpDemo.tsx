@@ -71,7 +71,7 @@ export function NlpDemo() {
           </p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {PIPELINE.map((p, index) => {
-              const Icon = PIPELINE_ICONS[index];
+              const Icon = PIPELINE_ICONS[index] ?? ScanText;
               return (
               <div key={p.step} className="group rounded-lg border border-border bg-chat-surface p-4 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/35 hover:shadow-md">
                 <div className={cn("mb-3 flex size-9 items-center justify-center rounded-lg border", PIPELINE_STYLES[index])}>
@@ -113,7 +113,7 @@ export function NlpDemo() {
              <Button type="submit" className="brand-gradient min-h-11 px-6 text-primary-foreground brand-glow">Analyse</Button>
           </form>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div aria-live="polite" aria-atomic="true" className="grid gap-3 sm:grid-cols-2">
             <InspectBlock label="Normalized text" value={result.trace.normalized || "—"} />
             <InspectBlock label="Tokens" value={result.trace.tokens.join(" · ") || "—"} />
             <InspectBlock
@@ -176,11 +176,11 @@ export function NlpDemo() {
             </ul>
           </div>
 
-          <p className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+          <p role="status" aria-live="polite" aria-atomic="true" className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">Decision:</span>{" "}
             {result.status === "matched"
               ? `Top score clears the ${(CONFIDENCE_THRESHOLD * 100).toFixed(0)}% threshold, so the matched answer is returned.`
-              : `Top score is below the ${(CONFIDENCE_THRESHOLD * 100).toFixed(0)}% threshold, so the chatbot falls back to asking the user to rephrase.`}
+               : `Top score is below the ${(CONFIDENCE_THRESHOLD * 100).toFixed(0)}% threshold, so the chatbot transparently returns the closest answer with related support topics.`}
           </p>
         </CardContent>
       </Card>

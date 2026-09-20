@@ -56,7 +56,7 @@ function Index() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
         <div className="mb-5 max-w-2xl">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-primary">Support intelligence studio</p>
           <h2 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">Answers you can trust. Logic you can inspect.</h2>
@@ -88,7 +88,7 @@ function Index() {
             <NlpDemo />
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
 
       <footer className="border-t border-border/80 bg-background/80 px-4 py-6 text-center text-xs font-medium text-muted-foreground">
         Private by design · Every score is computed instantly in your browser

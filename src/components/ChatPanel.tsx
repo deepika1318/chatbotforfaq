@@ -11,7 +11,6 @@ import {
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from "@/components/ai-elements/prompt-input";
-import { Shimmer } from "@/components/ai-elements/shimmer";
 import { cn } from "@/lib/utils";
 import { CONFIDENCE_THRESHOLD, confidenceBand, matchFaq, type MatchResult } from "@/lib/faqEngine";
 import assistantMark from "@/assets/faq-assistant-mark.png";
@@ -241,7 +240,7 @@ export function ChatPanel({
             <span className="brand-gradient flex size-8 items-center justify-center rounded-lg shadow-sm">
               <img src={assistantMark} alt="" className="size-6 object-contain" width={512} height={512} />
             </span>
-            <Shimmer>Analysing your question…</Shimmer>
+            <span>Analysing your question…</span>
           </div>
         )}
         </ConversationContent>
