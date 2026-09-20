@@ -163,6 +163,26 @@ export function ChatPanel({
                     {m.result.best.faq.question}
                   </p>
 
+                  {m.result.status !== "matched" && m.result.ranked.length > 1 && (
+                    <div className="border-t border-border pt-2">
+                      <p className="mb-2 text-xs font-bold text-foreground">Related topics</p>
+                      <div className="flex flex-wrap gap-2">
+                        {m.result.ranked.slice(1, 4).map((candidate) => (
+                          <Button
+                            key={candidate.faq.id}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-auto min-h-11 whitespace-normal rounded-md text-left text-xs"
+                            onClick={() => send(candidate.faq.question)}
+                          >
+                            {candidate.faq.question}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {showDebug && (
                      <Collapsible>
                        <CollapsibleTrigger className="min-h-11 rounded-md text-xs font-bold text-primary underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">

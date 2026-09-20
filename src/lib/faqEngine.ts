@@ -51,7 +51,9 @@ export interface MatchResult {
 }
 
 export const FALLBACK_MESSAGE =
-  "I'm not confident I found the right answer. Please try rephrasing your question or contact support.";
+  "I don't have an exact match, but here is the most relevant information from our support knowledge base:";
+
+const generalSupportFaq = faqData.find((faq) => faq.category === "Customer Support") ?? faqData[0];
 
 /** Run a query through the full pipeline and rank every FAQ by cosine similarity. */
 export function matchFaq(query: string): MatchResult {
@@ -59,13 +61,19 @@ export function matchFaq(query: string): MatchResult {
 
   // --- Guard: empty or meaningless query ---------------------------------
   if (trace.stems.length < MIN_MEANINGFUL_TOKENS) {
+    const related = faqData
+      .filter((faq) => faq.category === "Customer Support")
+      .slice(0, 3)
+      .map((faq) => ({ faq, score: 0 }));
     return {
       status: "empty_query",
-      best: null,
-      ranked: [],
+      best: generalSupportFaq ? { faq: generalSupportFaq, score: 0 } : null,
+      ranked: related,
       trace,
       queryWeights: [],
-      reply: `${FALLBACK_MESSAGE} (Your message had no meaningful keywords left after removing common words.)`,
+      reply: generalSupportFaq
+        ? `${FALLBACK_MESSAGE} ${generalSupportFaq.answer} You can also use Orders → Track shipment for order updates, or choose a related topic below.`
+        : "Please ask about an order, delivery, return, account, payment, product, or customer support topic.",
     };
   }
 
@@ -78,7 +86,17 @@ export function matchFaq(query: string): MatchResult {
     }))
     .sort((a, b) => b.score - a.score);
 
-  const best = ranked[0]!;
+  const best = ranked[0];
+  if (!best) {
+    return {
+      status: "empty_query",
+      best: null,
+      ranked: [],
+      trace,
+      queryWeights: [],
+      reply: "Please ask about an order, delivery, return, account, payment, product, or customer support topic.",
+    };
+  }
 
   // --- Weight breakdown for the NLP demo view ------------------------------
   const counts = new Map<string, number>();
@@ -109,7 +127,7 @@ export function matchFaq(query: string): MatchResult {
     ranked: ranked.slice(0, 5),
     trace,
     queryWeights,
-    reply: `${FALLBACK_MESSAGE} The closest entry I found was "${best.faq.question}", but it only scored ${(best.score * 100).toFixed(0)}% similarity, below my ${(CONFIDENCE_THRESHOLD * 100).toFixed(0)}% confidence threshold.`,
+    reply: `${FALLBACK_MESSAGE} ${best.faq.answer} If this does not resolve your issue, use live chat in the app, email support@shopdesk.example, or call 1800-123-456 between 9 AM and 9 PM. You can also choose a related topic below.`,
   };
 }
 
