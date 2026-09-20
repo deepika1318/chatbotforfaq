@@ -1,16 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import { Bot, RotateCcw, Send, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertTriangle, CheckCircle2, CircleHelp, RotateCcw, SlidersHorizontal, User } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
+import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from "@/components/ai-elements/prompt-input";
 import { cn } from "@/lib/utils";
 import { CONFIDENCE_THRESHOLD, confidenceBand, matchFaq, type MatchResult } from "@/lib/faqEngine";
+import assistantMark from "@/assets/faq-assistant-mark.png";
 
 export interface ChatMessage {
   id: string;
@@ -36,16 +39,23 @@ const WELCOME: ChatMessage = {
 
 function ConfidenceChip({ score }: { score: number }) {
   const band = confidenceBand(score);
+  const Icon = band === "high" ? CheckCircle2 : band === "moderate" ? AlertTriangle : CircleHelp;
+  const label = band === "high" ? "High confidence" : band === "moderate" ? "Moderate match" : "Low match";
   return (
     <span
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      aria-label={`${label}, ${(score * 100).toFixed(0)} percent`}
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
-        band === "high" && "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
-        band === "moderate" && "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
-        band === "low" && "bg-destructive/10 text-destructive",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold tabular-nums",
+        band === "high" && "border-success/25 bg-success-soft text-success",
+        band === "moderate" && "border-warning/25 bg-warning-soft text-warning",
+        band === "low" && "border-destructive/25 bg-danger-soft text-destructive",
       )}
     >
-      {(score * 100).toFixed(0)}% match
+      <Icon className="size-3.5" aria-hidden="true" />
+      {label} · {(score * 100).toFixed(0)}%
     </span>
   );
 }
@@ -61,16 +71,6 @@ export function ChatPanel({
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, isThinking]);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
 
   function send(text: string) {
     const question = text.trim();
@@ -91,7 +91,6 @@ export function ChatPanel({
         { id: `b-${Date.now()}`, role: "bot", text: result.reply, result },
       ]);
       setIsThinking(false);
-      inputRef.current?.focus();
     }, 320);
   }
 
@@ -105,63 +104,53 @@ export function ChatPanel({
   }, [pendingQuestion]);
 
   return (
-    <div className="flex h-[70vh] min-h-[520px] flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Bot className="size-4" />
+    <section aria-labelledby="chat-heading" className="flex h-[calc(100dvh-15.5rem)] min-h-[430px] flex-col overflow-hidden rounded-lg border border-border bg-chat-surface shadow-xl sm:h-[70vh] sm:min-h-[560px]">
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-card/90 px-3 py-3 sm:flex sm:justify-between sm:px-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="brand-gradient brand-glow flex size-10 shrink-0 items-center justify-center rounded-lg">
+            <img src={assistantMark} alt="" className="size-8 object-contain" width={512} height={512} />
           </span>
-          <div>
-            <p className="text-sm font-semibold leading-tight">Support Assistant</p>
-            <p className="text-xs text-muted-foreground">
+          <div className="min-w-0">
+            <h3 id="chat-heading" className="truncate text-sm font-bold leading-tight">Orbit Support Assistant</h3>
+            <p className="truncate text-xs font-medium text-muted-foreground">
               TF-IDF + cosine similarity · threshold {(CONFIDENCE_THRESHOLD * 100).toFixed(0)}%
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setShowDebug((v) => !v)}>
-            {showDebug ? "Hide" : "Show"} debug
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <Button aria-label={showDebug ? "Hide NLP details" : "Show NLP details"} aria-pressed={showDebug} variant="ghost" size="icon" className="min-h-11 min-w-11 sm:w-auto sm:px-3" onClick={() => setShowDebug((v) => !v)}>
+            <SlidersHorizontal className="size-4" /> <span className="hidden sm:inline">{showDebug ? "Hide" : "Show"} logic</span>
           </Button>
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
+            className="min-h-11 min-w-11 sm:w-auto sm:px-3"
+            aria-label="Clear conversation"
             onClick={() => {
               setMessages([WELCOME]);
-              inputRef.current?.focus();
             }}
           >
-            <RotateCcw className="size-3.5" /> Clear
+            <RotateCcw className="size-4" /> <span className="hidden sm:inline">Clear</span>
           </Button>
         </div>
-      </div>
+      </header>
 
-      {/* Thread */}
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+      <Conversation aria-live="polite" aria-atomic="false" className="bg-chat-surface">
+        <ConversationContent className="gap-5 px-3 py-5 sm:px-5">
         {messages.map((m) => (
-          <div
-            key={m.id}
-            className={cn("flex gap-2", m.role === "user" ? "justify-end" : "justify-start")}
-          >
+          <div key={m.id} role="group" aria-label={m.role === "user" ? "Message from you" : "Message from Orbit Support Assistant"} className={cn("flex items-start gap-2.5", m.role === "user" && "flex-row-reverse")}>
             {m.role === "bot" && (
-              <span className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <Bot className="size-3.5" />
+              <span className="brand-gradient mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg shadow-md ring-2 ring-primary/15">
+                <img src={assistantMark} alt="" className="size-6 object-contain" width={512} height={512} />
               </span>
             )}
-            <div className={cn("max-w-[85%] space-y-2 sm:max-w-[75%]")}>
-              <div
-                className={cn(
-                  "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
-                  m.role === "user"
-                    ? "rounded-br-sm bg-primary text-primary-foreground"
-                    : "rounded-bl-sm bg-muted text-foreground",
-                )}
-              >
-                {m.text}
-              </div>
+            <Message from={m.role === "bot" ? "assistant" : "user"} className="max-w-[88%] sm:max-w-[78%]">
+              <MessageContent className={cn("leading-relaxed", m.role === "user" ? "brand-gradient rounded-br-sm px-4 py-3 text-primary-foreground shadow-lg" : "rounded-bl-sm border border-border bg-card px-4 py-3 shadow-sm")}>
+                <MessageResponse>{m.text}</MessageResponse>
+              </MessageContent>
 
               {m.result?.best && (
-                <div className="space-y-2 rounded-lg border bg-background px-3 py-2">
+                <aside aria-label="FAQ match details" className="mt-2 space-y-2 rounded-lg border border-border bg-card px-3 py-3 shadow-sm">
                   <div className="flex flex-wrap items-center gap-2">
                     <ConfidenceChip score={m.result.best.score} />
                     <Badge variant="secondary" className="text-xs">
@@ -173,9 +162,29 @@ export function ChatPanel({
                     {m.result.best.faq.question}
                   </p>
 
+                  {m.result.status !== "matched" && m.result.ranked.length > 1 && (
+                    <div className="border-t border-border pt-2">
+                      <p className="mb-2 text-xs font-bold text-foreground">Related topics</p>
+                      <div className="flex flex-wrap gap-2">
+                        {m.result.ranked.slice(1, 4).map((candidate) => (
+                          <Button
+                            key={candidate.faq.id}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-auto min-h-11 whitespace-normal rounded-md text-left text-xs"
+                            onClick={() => send(candidate.faq.question)}
+                          >
+                            {candidate.faq.question}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {showDebug && (
-                    <Collapsible>
-                      <CollapsibleTrigger className="text-xs font-medium text-primary underline-offset-2 hover:underline">
+                     <Collapsible>
+                       <CollapsibleTrigger className="min-h-11 rounded-md text-xs font-bold text-primary underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
                         Inspect NLP steps
                       </CollapsibleTrigger>
                       <CollapsibleContent className="mt-2 space-y-2 text-xs">
@@ -215,61 +224,60 @@ export function ChatPanel({
                       </CollapsibleContent>
                     </Collapsible>
                   )}
-                </div>
+                 </aside>
               )}
-            </div>
+            </Message>
             {m.role === "user" && (
-              <span className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <User className="size-3.5" />
+              <span className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary shadow-sm">
+                <User className="size-4" aria-hidden="true" />
               </span>
             )}
           </div>
         ))}
 
         {isThinking && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="flex size-7 items-center justify-center rounded-full bg-muted">
-              <Bot className="size-3.5" />
+          <div role="status" aria-live="polite" aria-atomic="true" className="flex items-center gap-2.5 text-sm font-medium text-muted-foreground">
+            <span className="brand-gradient flex size-8 items-center justify-center rounded-lg shadow-sm">
+              <img src={assistantMark} alt="" className="size-6 object-contain" width={512} height={512} />
             </span>
-            Analysing your question…
+            <span>Analysing your question…</span>
           </div>
         )}
-        <div ref={endRef} />
-      </div>
+        </ConversationContent>
+        <ConversationScrollButton aria-label="Scroll to latest message" />
+      </Conversation>
 
-      {/* Composer */}
-      <div className="space-y-3 border-t px-4 py-3">
-        <form
-          className="flex items-center gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            send(input);
-          }}
+      <footer className="sticky bottom-0 z-10 space-y-3 border-t border-border bg-card/95 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:px-5">
+        <PromptInput
+          className="rounded-lg border-border bg-background shadow-md focus-within:ring-2 focus-within:ring-primary"
+          onSubmit={({ text }) => send(text)}
         >
-          <Input
-            ref={inputRef}
+          <PromptInputTextarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask a question about your order, refund, account…"
             disabled={isThinking}
+            aria-label="Message Orbit Support Assistant"
+            className="min-h-12 text-sm"
           />
-          <Button type="submit" size="icon" disabled={isThinking || !input.trim()}>
-            <Send className="size-4" />
-          </Button>
-        </form>
-        <div className="flex flex-wrap gap-1.5">
+          <PromptInputFooter className="justify-end px-2 pb-2">
+            <PromptInputSubmit className="brand-gradient min-h-11 min-w-11 rounded-md text-primary-foreground brand-glow" status={isThinking ? "submitted" : "ready"} disabled={isThinking || !input.trim()} />
+          </PromptInputFooter>
+        </PromptInput>
+        <nav aria-label="Example questions" className="scrollbar-none -mx-3 flex snap-x gap-2 overflow-x-auto px-3 pb-0.5 sm:mx-0 sm:px-0">
           {EXAMPLE_QUESTIONS.map((q) => (
-            <button
+            <Button
               key={q}
               type="button"
+              variant="outline"
               onClick={() => send(q)}
-              className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="min-h-11 shrink-0 snap-start rounded-full bg-background px-3 text-xs font-semibold text-muted-foreground shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-accent hover:text-accent-foreground hover:shadow-md"
             >
               {q}
-            </button>
+            </Button>
           ))}
-        </div>
-      </div>
-    </div>
+        </nav>
+      </footer>
+    </section>
   );
 }

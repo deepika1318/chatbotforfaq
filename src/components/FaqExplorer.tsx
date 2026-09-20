@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { MessageSquarePlus, Search } from "lucide-react";
+import { CircleDollarSign, Headphones, KeyRound, MessageSquarePlus, PackageSearch, RotateCcw, Search, Undo2 } from "lucide-react";
 
 import {
   Accordion,
@@ -12,6 +12,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { FAQ_CATEGORIES, faqData, type FaqCategory } from "@/data/faqData";
+
+const CATEGORY_STYLES: Record<FaqCategory, string> = {
+  "Orders & Shipping": "border-category-shipping/25 bg-category-shipping/10 text-category-shipping",
+  "Returns & Refunds": "border-category-returns/25 bg-category-returns/10 text-category-returns",
+  "Account & Security": "border-category-account/25 bg-category-account/10 text-category-account",
+  "Payments & Invoices": "border-category-payments/25 bg-category-payments/10 text-category-payments",
+  "Product & Stock": "border-category-product/25 bg-category-product/10 text-category-product",
+  "Customer Support": "border-category-support/25 bg-category-support/10 text-category-support",
+};
+
+const CATEGORY_ICONS: Record<FaqCategory, typeof PackageSearch> = {
+  "Orders & Shipping": PackageSearch,
+  "Returns & Refunds": Undo2,
+  "Account & Security": KeyRound,
+  "Payments & Invoices": CircleDollarSign,
+  "Product & Stock": PackageSearch,
+  "Customer Support": Headphones,
+};
 
 export function FaqExplorer({ onAskInChat }: { onAskInChat: (question: string) => void }) {
   const [search, setSearch] = useState("");
@@ -31,53 +49,58 @@ export function FaqExplorer({ onAskInChat }: { onAskInChat: (question: string) =
   }, [search, category]);
 
   return (
-    <div className="space-y-4">
-      <div className="relative">
+    <section aria-labelledby="faq-library-heading" className="space-y-5">
+      <h3 id="faq-library-heading" className="sr-only">Frequently asked question library</h3>
+      <div className="relative rounded-lg border border-border bg-card p-2 shadow-sm">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search all FAQs by keyword…"
-          className="pl-9"
+          aria-label="Search frequently asked questions"
+          className="h-11 border-0 bg-transparent pl-9 shadow-none focus-visible:ring-2"
         />
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
+      <nav aria-label="Filter FAQs by category" className="scrollbar-none -mx-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
         {(["All", ...FAQ_CATEGORIES] as const).map((c) => (
-          <button
+          <Button
             key={c}
             type="button"
+            variant="outline"
             onClick={() => setCategory(c as FaqCategory | "All")}
+            aria-pressed={category === c}
             className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+              "min-h-11 shrink-0 snap-start rounded-full px-4 text-xs font-bold shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
               category === c
-                ? "border-primary bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                ? "brand-gradient border-transparent text-primary-foreground brand-glow"
+                : c === "All" ? "bg-card text-foreground" : CATEGORY_STYLES[c],
             )}
           >
             {c}
-          </button>
+          </Button>
         ))}
-      </div>
+      </nav>
 
-      <p className="text-xs text-muted-foreground">
+      <p role="status" aria-live="polite" aria-atomic="true" className="text-xs font-semibold text-muted-foreground">
         Showing {filtered.length} of {faqData.length} FAQs
       </p>
 
-      <Accordion type="single" collapsible className="rounded-xl border bg-card px-4">
+      <Accordion type="single" collapsible className="grid gap-3 sm:grid-cols-2">
         {filtered.map((faq) => (
-          <AccordionItem key={faq.id} value={String(faq.id)}>
-            <AccordionTrigger className="text-left text-sm">
-              <span className="flex flex-1 flex-wrap items-center gap-2 pr-2">
-                {faq.question}
-                <Badge variant="secondary" className="text-[10px] font-normal">
+          <AccordionItem key={faq.id} value={String(faq.id)} className="self-start rounded-lg border border-border bg-card px-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
+            <AccordionTrigger className="min-h-14 text-left text-sm font-semibold focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+              <span className="flex min-w-0 flex-1 flex-col items-start gap-2 pr-2">
+                <span>{faq.question}</span>
+                <Badge variant="outline" className={cn("gap-1.5 text-[10px] font-bold", CATEGORY_STYLES[faq.category])}>
+                  {(() => { const Icon = CATEGORY_ICONS[faq.category]; return <Icon className="size-3" aria-hidden="true" />; })()}
                   {faq.category}
                 </Badge>
               </span>
             </AccordionTrigger>
             <AccordionContent className="space-y-3">
               <p className="text-sm leading-relaxed text-muted-foreground">{faq.answer}</p>
-              <Button size="sm" variant="outline" onClick={() => onAskInChat(faq.question)}>
+              <Button className="min-h-11" size="sm" variant="outline" onClick={() => onAskInChat(faq.question)}>
                 <MessageSquarePlus className="size-3.5" /> Ask this in chat
               </Button>
             </AccordionContent>
@@ -86,10 +109,11 @@ export function FaqExplorer({ onAskInChat }: { onAskInChat: (question: string) =
       </Accordion>
 
       {filtered.length === 0 && (
-        <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-          No FAQ matches that keyword. Try a different term or reset the category filter.
-        </p>
+        <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-8 text-center">
+          <p className="text-sm font-semibold text-foreground">No matching answers found</p>
+          <Button variant="ghost" className="mt-2 min-h-11" onClick={() => { setSearch(""); setCategory("All"); }}><RotateCcw className="size-4" /> Reset filters</Button>
+        </div>
       )}
-    </div>
+    </section>
   );
 }
